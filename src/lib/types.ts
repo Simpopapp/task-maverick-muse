@@ -7,4 +7,14 @@ export interface Task {
   priority: Priority;
   completed: boolean;
   createdAt: Date;
+  userId: string;
+}
+
+export type UserRole = 'guest' | 'member' | 'leader';
+
+export interface User {
+  id: string;
+  email: string;
+  username: string;
+  role: UserRole;
 }
