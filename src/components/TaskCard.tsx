@@ -58,7 +58,7 @@ export const TaskCard = ({ task, onToggleComplete }: TaskCardProps) => {
           </p>
           
           <div className="mt-2 text-xs text-gray-400">
-            Created {task.createdAt.toLocaleDateString()}
+            Created {new Date(task.created_at).toLocaleDateString()}
           </div>
         </div>
       </div>
