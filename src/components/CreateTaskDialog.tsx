@@ -19,6 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Priority, Task } from "@/lib/types";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 interface CreateTaskDialogProps {
   onCreateTask: (task: Omit<Task, 'id' | 'completed' | 'createdAt'>) => void;
@@ -31,9 +32,20 @@ export const CreateTaskDialog = ({ onCreateTask }: CreateTaskDialogProps) => {
   const [priority, setPriority] = useState<Priority>("medium");
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be logged in to create tasks",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!title.trim()) {
       toast({
         title: "Error",
@@ -47,6 +59,7 @@ export const CreateTaskDialog = ({ onCreateTask }: CreateTaskDialogProps) => {
       title,
       description,
       priority,
+      userId: user.id,
     });
 
     setTitle("");
