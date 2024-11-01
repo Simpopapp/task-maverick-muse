@@ -16,26 +16,25 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Priority, Task } from "@/lib/types";
+import { Priority, Task, TaskStatus } from "@/lib/types";
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { useTasks } from "@/hooks/useTasks";
+import { useAuth } from "@/hooks/useAuth";
 
-interface CreateTaskDialogProps {
-  onCreateTask: (task: Omit<Task, 'id' | 'completed' | 'createdAt'>) => void;
-}
-
-export const CreateTaskDialog = ({ onCreateTask }: CreateTaskDialogProps) => {
+export const CreateTaskDialog = () => {
   const [open, setOpen] = useState(false);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<Priority>("medium");
+  const [status, setStatus] = useState<TaskStatus>("pending");
+  const [dueDate, setDueDate] = useState("");
   const { toast } = useToast();
+  const { createTask } = useTasks();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    const { data: { user } } = await supabase.auth.getUser();
     
     if (!user) {
       toast({
@@ -55,30 +54,35 @@ export const CreateTaskDialog = ({ onCreateTask }: CreateTaskDialogProps) => {
       return;
     }
 
-    onCreateTask({
+    const newTask = {
       title,
       description,
       priority,
+      status,
+      due_date: new Date(dueDate),
+      assignee_id: user.id,
+      created_by: user.id,
+      completed: false,
       userId: user.id,
-    });
+    };
 
+    await createTask.mutateAsync(newTask);
+    setOpen(false);
+    resetForm();
+  };
+
+  const resetForm = () => {
     setTitle("");
     setDescription("");
     setPriority("medium");
-    setOpen(false);
-    
-    toast({
-      title: "Success",
-      description: "Task created successfully",
-    });
+    setStatus("pending");
+    setDueDate("");
   };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-blue-500 hover:bg-blue-600">
-          Create New Task
-        </Button>
+        <Button>Create New Task</Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
@@ -120,6 +124,33 @@ export const CreateTaskDialog = ({ onCreateTask }: CreateTaskDialogProps) => {
                 <SelectItem value="high">High</SelectItem>
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="status">Status</Label>
+            <Select
+              value={status}
+              onValueChange={(value: TaskStatus) => setStatus(value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="pending">Pending</SelectItem>
+                <SelectItem value="in_progress">In Progress</SelectItem>
+                <SelectItem value="completed">Completed</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="dueDate">Due Date</Label>
+            <Input
+              id="dueDate"
+              type="datetime-local"
+              value={dueDate}
+              onChange={(e) => setDueDate(e.target.value)}
+            />
           </div>
           
           <Button type="submit" className="w-full">

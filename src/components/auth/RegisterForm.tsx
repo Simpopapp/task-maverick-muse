@@ -2,32 +2,27 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { useAuth } from "@/hooks/useAuth";
 import { UserRole } from "@/lib/types";
 
 export const RegisterForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
-  const { toast } = useToast();
+  const [role, setRole] = useState<UserRole>("guest");
+  const { register } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    try {
-      // TODO: Implement Supabase registration
-      toast({
-        title: "Success",
-        description: "Registered successfully",
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to register",
-        variant: "destructive",
-      });
-    }
+    await register(email, password, role);
   };
 
   return (
@@ -68,6 +63,19 @@ export const RegisterForm = () => {
               placeholder="Choose a password"
               required
             />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="role">Role</Label>
+            <Select value={role} onValueChange={(value: UserRole) => setRole(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select your role" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="guest">Guest</SelectItem>
+                <SelectItem value="member">Member</SelectItem>
+                <SelectItem value="leader">Leader</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <Button type="submit" className="w-full">
             Register
